@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2048 Game - Green Theme - Chiamaka Offokansi</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #e0f2e9;
+            font-family: Arial, sans-serif;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        #game-container {
+            text-align: center;
+        }
+
+        #score {
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        #game-board {
+            display: grid;
+            grid-template-columns: repeat(4, 100px);
+            gap: 10px;
+        }
+
+        .tile {
+            width: 100px;
+            height: 100px;
+            background-color: #60704e; /* Default green color */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: white;
+            border-radius: 5px;
+            transition: all 0.2s ease;
+        }
+
+        .tile[data-value="2"] { background-color: #b8caa4; }
+        .tile[data-value="4"] { background-color: #aed581; }
+        .tile[data-value="8"] { background-color: #638739; }
+        .tile[data-value="16"] { background-color: #4b672d; }
+        .tile[data-value="32"] { background-color: #425134; }
+        .tile[data-value="64"] { background-color: #3b4c2f; }
+        .tile[data-value="128"] { background-color: #33691e; }
+        .tile[data-value="256"] { background-color: #2e7d32; }
+        .tile[data-value="512"] { background-color: #1b5e20; }
+        .tile[data-value="1024"] { background-color: #004d40; }
+        .tile[data-value="2048"] { background-color: #1a237e; }
+    </style>
+</head>
+<body>
+    <h1>2048 - My Rendition</h1>
+
+    <div id="game-container">
+        <div id="score">Score: 0</div>
+        <div id="game-board"></div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const boardSize = 4;
+            let score = 0;
+            const board = Array(boardSize * boardSize).fill(0);
+
+            const gameBoard = document.getElementById('game-board');
+            const scoreDisplay = document.getElementById('score');
+
+            // Create the board
+            function createBoard() {
+                gameBoard.innerHTML = '';
+                board.forEach((value, index) => {
+                    const tile = document.createElement('div');
+                    tile.classList.add('tile');
+                    if (value) {
+                        tile.innerText = value;
+                        tile.dataset.value = value;
+                    }
+                    gameBoard.appendChild(tile);
+                });
+            }
+
+            // Add a new tile to the board
+            function addTile() {
+                const emptyTiles = board
+                    .map((value, index) => (value === 0 ? index : null))
+                    .filter(index => index !== null);
+                if (emptyTiles.length > 0) {
+                    const randomTile = emptyTiles[Math.floor(Math.random() * emptyTiles.length)];
+                    board[randomTile] = 2;
+                    createBoard();
+                }
+            }
+
+            // Initialize the game
+            function initGame() {
+                score = 0;
+                scoreDisplay.innerText = `Score: ${score}`;
+                board.fill(0);
+                addTile();
+                addTile();
+            }
+
+            // Move tiles
+            function moveLeft() {
+                for (let i = 0; i < boardSize; i++) {
+                    let row = board.slice(i * boardSize, (i + 1) * boardSize);
+                    row = slide(row);
+                    row.forEach((num, index) => {
+                        board[i * boardSize + index] = num;
+                    });
+                }
+                createBoard();
+            }
+
+            function moveRight() {
+                for (let i = 0; i < boardSize; i++) {
+                    let row = board.slice(i * boardSize, (i + 1) * boardSize);
+                    row.reverse();
+                    row = slide(row);
+                    row.reverse();
+                    row.forEach((num, index) => {
+                        board[i * boardSize + index] = num;
+                    });
+                }
+                createBoard();
+            }
+
+            function moveUp() {
+                for (let i = 0; i < boardSize; i++) {
+                    let column = [];
+                    for (let j = 0; j < boardSize; j++) {
+                        column.push(board[i + j * boardSize]);
+                    }
+                    column = slide(column);
+                    column.forEach((num, index) => {
+                        board[i + index * boardSize] = num;
+                    });
+                }
+                createBoard();
+            }
+
+            function moveDown() {
+                for (let i = 0; i < boardSize; i++) {
+                    let column = [];
+                    for (let j = 0; j < boardSize; j++) {
+                        column.push(board[i + j * boardSize]);
+                    }
+                    column.reverse();
+                    column = slide(column);
+                    column.reverse();
+                    column.forEach((num, index) => {
+                        board[i + index * boardSize] = num;
+                    });
+                }
+                createBoard();
+            }
+
+            // Slide and combine tiles
+            function slide(row) {
+                row = row.filter(num => num);
+                for (let i = 0; i < row.length - 1; i++) {
+                    if (row[i] === row[i + 1]) {
+                        row[i] *= 2;
+                        score += row[i];
+                        row[i + 1] = 0;
+                    }
+                }
+                row = row.filter(num => num);
+                while (row.length < boardSize) {
+                    row.push(0);
+                }
+                return row;
+            }
+
+            // Handle key presses
+            function handleKeyPress(event) {
+                if (event.key === 'ArrowUp') {
+                    moveUp();
+                } else if (event.key === 'ArrowDown') {
+                    moveDown();
+                } else if (event.key === 'ArrowLeft') {
+                    moveLeft();
+                } else if (event.key === 'ArrowRight') {
+                    moveRight();
+                }
+                addTile();
+                updateScore();
+            }
+
+            // Update the score
+            function updateScore() {
+                scoreDisplay.innerText = `Score: ${score}`;
+            }
+
+            // Start the game
+            initGame();
+            document.addEventListener('keydown', handleKeyPress);
+        });
+    </script>
+</body>
+</html>
